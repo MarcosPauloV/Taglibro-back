@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+model Institution {
+  id          String      @id @default(uuid())
+  name        String
+  cnpj        String      @unique
+  password    String
+  legalNature LegalNature
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  Branch      Branch[]
+}
+
+enum LegalNature {
+  PRIVATE
+  PUBLIC
+}
+
+model Branch {
+  id            String       @id @default(uuid())
+  name          String
+  cnpj          String       @unique
+  institutionId String
+  addressId     String
+  slug          String       @unique
+  address       Address      @relation(fields: [addressId], references: [id])
+  institution   Institution  @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  BranchUser    BranchUser[]
+  Course        Course[]
+}
+
+model User {
+  id          String       @id @default(uuid())
+  name        String
+  rg          String
+  cpf         String
+  bornDate    DateTime
+  addressId   String
+  address     Address      @relation(fields: [addressId], references: [id])
+  phoneNumber String
+  email       String       @unique
+  password    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  BranchUser  BranchUser[]
+  UserCourse  UserCourse[] // Relacionamento intermediário com Course
+  Assesment   Assesment[]
+}
+
+model Address {
+  id           String       @id @default(uuid())
+  country      String
+  city         String
+  state        String
+  neighborhood String
+  number       Int
+  CEP          String
+  street       String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  Branches     Branch[]
+  userCourses  UserCourse[]
+  Users        User[] // Relacionamento com o modelo User
+}
+
+enum Role {
+  ADMIN
+  USER
+  STUDENT
+}
+
+model BranchUser {
+  userId    String
+  branchId  String
+  user      User     @relation(fields: [userId], references: [id])
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([userId, branchId])
+}
+
+model Course {
+  id         String       @id @default(uuid())
+  name       String
+  totalGrade Float
+  branchId   String
+  branch     Branch       @relation(fields: [branchId], references: [id])
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  UserCourse UserCourse[] // Relacionamento intermediário com User
+  Module     Module[]
+}
+
+model UserCourse {
+  userId    String
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  Address   Address? @relation(fields: [addressId], references: [id])
+  addressId String?
+
+  @@id([userId, courseId]) // Chave composta para garantir unicidade do par User-Course
+}
+
+model Module {
+  id         String      @id @default(uuid())
+  name       String
+  duration   Int
+  subject    String
+  grade      Float
+  courseId   String
+  course     Course      @relation(fields: [courseId], references: [id])
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  Assesments Assesment[]
+}
+
+model Assesment {
+  id            Int           @id @default(autoincrement())
+  moduleId      String
+  userId        String
+  assesmentName String
+  type          AssesmentType
+  grade         Float?
+  frequency     Int?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  User          User          @relation(fields: [userId], references: [id])
+  Module        Module        @relation(fields: [moduleId], references: [id])
+
+  @@unique([moduleId, userId])
+  @@map("Assesment")
+}
+
+enum AssesmentType {
+  FREQUENCY
+  GRADE
+}

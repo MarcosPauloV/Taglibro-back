@@ -1,0 +1,173 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table Institution {
+  id String [pk]
+  name String [not null]
+  cnpj String [unique, not null]
+  password String [not null]
+  legalNature LegalNature [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Branch Branch [not null]
+}
+
+Table Branch {
+  id String [pk]
+  name String [not null]
+  cnpj String [unique, not null]
+  institutionId String [not null]
+  addressId String [not null]
+  slug String [unique, not null]
+  address Address [not null]
+  institution Institution [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  BranchUser BranchUser [not null]
+  Course Course [not null]
+}
+
+Table User {
+  id String [pk]
+  name String [not null]
+  rg String [not null]
+  cpf String [not null]
+  bornDate DateTime [not null]
+  addressId String [not null]
+  address Address [not null]
+  phoneNumber String [not null]
+  email String [unique, not null]
+  password String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  BranchUser BranchUser [not null]
+  UserCourse UserCourse [not null]
+  Assesment Assesment [not null]
+}
+
+Table Address {
+  id String [pk]
+  country String [not null]
+  city String [not null]
+  state String [not null]
+  neighborhood String [not null]
+  number Int [not null]
+  CEP String [not null]
+  street String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Branches Branch [not null]
+  userCourses UserCourse [not null]
+  Users User [not null]
+}
+
+Table BranchUser {
+  userId String [not null]
+  branchId String [not null]
+  user User [not null]
+  branch Branch [not null]
+  role Role [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+
+  indexes {
+    (userId, branchId) [pk]
+  }
+}
+
+Table Course {
+  id String [pk]
+  name String [not null]
+  totalGrade Float [not null]
+  branchId String [not null]
+  branch Branch [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  UserCourse UserCourse [not null]
+  Module Module [not null]
+}
+
+Table UserCourse {
+  userId String [not null]
+  courseId String [not null]
+  user User [not null]
+  course Course [not null]
+  Address Address
+  addressId String
+
+  indexes {
+    (userId, courseId) [pk]
+  }
+}
+
+Table Module {
+  id String [pk]
+  name String [not null]
+  duration Int [not null]
+  subject String [not null]
+  grade Float [not null]
+  courseId String [not null]
+  course Course [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  Assesments Assesment [not null]
+}
+
+Table Assesment {
+  id Int [pk, increment]
+  moduleId String [not null]
+  userId String [not null]
+  assesmentName String [not null]
+  type AssesmentType [not null]
+  grade Float
+  frequency Int
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  User User [not null]
+  Module Module [not null]
+
+  indexes {
+    (moduleId, userId) [unique]
+  }
+}
+
+Enum LegalNature {
+  PRIVATE
+  PUBLIC
+}
+
+Enum Role {
+  ADMIN
+  USER
+  STUDENT
+}
+
+Enum AssesmentType {
+  FREQUENCY
+  GRADE
+}
+
+Ref: Branch.addressId > Address.id
+
+Ref: Branch.institutionId > Institution.id
+
+Ref: User.addressId > Address.id
+
+Ref: BranchUser.userId > User.id
+
+Ref: BranchUser.branchId > Branch.id
+
+Ref: Course.branchId > Branch.id
+
+Ref: UserCourse.userId > User.id
+
+Ref: UserCourse.courseId > Course.id
+
+Ref: UserCourse.addressId > Address.id
+
+Ref: Module.courseId > Course.id
+
+Ref: Assesment.userId > User.id
+
+Ref: Assesment.moduleId > Module.id
